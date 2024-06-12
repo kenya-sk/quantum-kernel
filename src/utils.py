@@ -93,8 +93,14 @@ def plot_decisionon_boundaries(
     step_size: float = 0.1,
     save_path: Optional[str] = None,
 ):
-    x_min, x_max = dataset.x_test[:, 0].min() - 0.5, dataset.x_test[:, 0].max() + 0.5
-    y_min, y_max = dataset.x_test[:, 1].min() - 0.5, dataset.x_test[:, 1].max() + 0.5
+    x_min, x_max = (
+        dataset.x_test[:, 0].min() - step_size,
+        dataset.x_test[:, 0].max() + step_size,
+    )
+    y_min, y_max = (
+        dataset.x_test[:, 1].min() - step_size,
+        dataset.x_test[:, 1].max() + step_size,
+    )
     xx, yy = np.meshgrid(
         np.arange(x_min, x_max, step_size), np.arange(y_min, y_max, step_size)
     )
@@ -109,6 +115,8 @@ def plot_decisionon_boundaries(
     Z = Z.reshape(xx.shape)
 
     plt.figure(figsize=(6, 6))
+    if np.isnan(Z).any() or np.isinf(Z).any():
+        Z = np.nan_to_num(Z, nan=0.0, posinf=1.0, neginf=-1.0)
     plt.contourf(xx, yy, Z, cmap=plt.cm.coolwarm, alpha=0.5, levels=[-1, 0, 1])
 
     neg_subset = dataset.x_test[np.where(dataset.y_test == -1)]
