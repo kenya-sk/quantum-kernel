@@ -47,14 +47,10 @@ def compute_kernel(
 
 def evaluate_kernel(
     x_train: np.ndarray, y_train: np.ndarray, kernel_params: KernelParams
-) -> tuple[float, float]:
+) -> float:
     target_alignment = qml.kernels.target_alignment(
         x_train, y_train, lambda x1, x2: kernel_params.kernel(x1, x2, kernel_params)[0]
     )
-    polarity = qml.kernels.polarity(
-        x_train, y_train, lambda x1, x2: kernel_params.kernel(x1, x2, kernel_params)[0]
-    )
     print(f"Target Kernel Alignment: {target_alignment:.2f}")
-    print(f"Kernel Polarity: {polarity:.2f}")
 
-    return target_alignment, polarity
+    return target_alignment

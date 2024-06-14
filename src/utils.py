@@ -52,6 +52,7 @@ def plot_predicted_result(
     dataset: Dataset,
     y_pred: np.ndarray,
     colors: Dict[int, str] = {-1: "red", 1: "green"},
+    axis: List[int] = [0, 1],
     save_path: Optional[str] = None,
 ):
 
@@ -60,8 +61,8 @@ def plot_predicted_result(
     for class_value in np.unique(dataset.y_test):
         groud_subset = dataset.x_test[np.where(dataset.y_test == class_value)]
         plt.scatter(
-            groud_subset[:, 0],
-            groud_subset[:, 1],
+            groud_subset[:, axis[0]],
+            groud_subset[:, axis[1]],
             edgecolor=colors[class_value],
             facecolor="none",
             s=100,
@@ -70,15 +71,15 @@ def plot_predicted_result(
 
         predicted_subset = dataset.x_test[np.where(y_pred == class_value)]
         plt.scatter(
-            predicted_subset[:, 0],
-            predicted_subset[:, 1],
+            predicted_subset[:, axis[0]],
+            predicted_subset[:, axis[1]],
             marker="x",
             c=colors[class_value],
             label="Predicted",
         )
 
-    plt.xlabel(f"{dataset.feature_cols[0]}")
-    plt.ylabel(f"{dataset.feature_cols[1]}")
+    plt.xlabel(f"{dataset.feature_cols[axis[0]]}")
+    plt.ylabel(f"{dataset.feature_cols[axis[1]]}")
     plt.legend()
     plt.title("Groud Truth VS Predicted (Quantum Kernel)")
 
@@ -89,7 +90,7 @@ def plot_predicted_result(
 def plot_decisionon_boundaries(
     model: SVC,
     dataset: Dataset,
-    kernel_params: KernelParams,
+    kernel_params: Optional[KernelParams] = None,
     step_size: float = 0.1,
     save_path: Optional[str] = None,
 ):
@@ -107,11 +108,13 @@ def plot_decisionon_boundaries(
 
     # calculate kernel matrix for mesh points
     mesh_points = np.c_[xx.ravel(), yy.ravel()]
-    print(f"Calculating Kernel Matrix for {len(mesh_points)} mesh points")
-    K_mesh = compute_kernel(mesh_points, dataset.x_train, kernel_params)
+    if kernel_params is None:
+        Z = model.predict(mesh_points)
+    else:
+        print(f"Calculating Kernel Matrix for {len(mesh_points)} mesh points")
+        K_mesh = compute_kernel(mesh_points, dataset.x_train, kernel_params)
+        Z = model.predict(K_mesh)
 
-    # Predict the mesh points
-    Z = model.predict(K_mesh)
     Z = Z.reshape(xx.shape)
 
     plt.figure(figsize=(6, 6))
@@ -134,14 +137,18 @@ def plot_decisionon_boundaries(
 def plot_metrics(
     reps_list: List[int],
     accuracy_list: List[float],
+    precision_list: List[float],
+    recall_list: List[float],
+    f1_list: List[float],
     target_alignment_list: List[float],
-    polarity_list: List[float],
     save_path: Optional[str] = None,
 ):
     plt.figure(figsize=(12, 4))
     plt.plot(reps_list, accuracy_list, marker="o", label="Accuracy")
+    plt.plot(reps_list, precision_list, marker="o", label="Precision")
+    plt.plot(reps_list, recall_list, marker="o", label="Recall")
+    plt.plot(reps_list, f1_list, marker="o", label="F1")
     plt.plot(reps_list, target_alignment_list, marker="o", label="Target Alignment")
-    plt.plot(reps_list, polarity_list, marker="o", label="Polarity")
     plt.xticks(reps_list)
     plt.legend()
     plt.xlabel("Reps")
